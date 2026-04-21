@@ -37,7 +37,7 @@ class VistaCliente:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-    # ── lógica según el flujograma ──────────────────────────────────────────
+    # lógica según el flujograma 
 
     def _registrar(self, _):
         nombre = self.txt_nombre.value.strip()
@@ -63,7 +63,7 @@ class VistaCliente:
         if self.on_volver:
             self.on_volver()
 
-    # ── helpers ─────────────────────────────────────────────────────────────
+    # helpers 
 
     def _set_msg(self, texto: str, color):
         self.msg.value = texto
@@ -77,7 +77,7 @@ class VistaCliente:
         self.page.update()
 
 
-# ── ejecución directa para probar la vista sola ─────────────────────────────
+# ejecución para probar 
 def main(page: ft.Page):
     page.title = "Vista Cliente"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
