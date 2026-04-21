@@ -13,9 +13,9 @@ COLORES = {
     "advertencia": "#FF9800",
 }
 
-class Navbar(ft.UserControl):
+class Navbar:
     def __init__(self, pagina_actual: str, on_cambiar):
-        super().__init__()
+
         self.pagina_actual = pagina_actual
         self.on_cambiar    = on_cambiar
 
