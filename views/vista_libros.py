@@ -1,78 +1,176 @@
 import flet as ft
+from models.libro import Libro
+from components.Navbar import (
+    COLORES, tarjeta, boton_primario,
+    campo_texto, chip_estado, titulo_seccion, snackbar_mensaje
+)
 
-def vista_libros(page: ft.Page):
-    # --- Títulos y Estética ---
-    titulo = ft.Text("Gestión de Libros", size=30, weight="bold", color=ft.colors.BLUE_700)
-    subtitulo = ft.Text("Añade nuevos ejemplares al inventario", size=16, color=ft.colors.GREY_700)
 
-    # --- Campos de Entrada (Formulario) ---
-    tf_titulo = ft.TextField(
-        label="Título del Libro", 
-        hint_text="Ej: Cien años de soledad",
-        border_radius=10
-    )
-    tf_autor = ft.TextField(
-        label="Autor", 
-        hint_text="Ej: Gabriel García Márquez",
-        border_radius=10
-    )
-    tf_genero = ft.TextField(
-        label="Género", 
-        hint_text="Ej: Realismo Mágico",
-        border_radius=10
-    )
+def vista_libros(page: ft.Page, libros: list) -> ft.Container:
+    """
+    Vista para gestionar el inventario de libros de la biblioteca.
 
-    # --- Lista donde se mostrarán los libros ---
-    lista_libros = ft.Column(spacing=10, scroll=ft.ScrollMode.ALWAYS, expand=True)
+    Permite registrar nuevos libros (Título, Autor, ISBN) y visualizar
+    el inventario completo con el estado de cada libro.
 
-    # --- Función para el Botón ---
-    def guardar_click(e):
-        if not tf_titulo.value or not tf_autor.value:
-            # Si faltan datos, mostramos un error simple
-            tf_titulo.error_text = "Por favor, llena este campo"
-            page.update()
-        else:
-            # Agregamos el libro a la lista visual
+    Args:
+        page   : Referencia a la página principal de Flet.
+        libros : Lista compartida de objetos Libro (se modifica en lugar).
+    """
+
+    # ── CAMPOS DEL FORMULARIO ────────────────────────────────
+    tf_titulo = campo_texto("Título del Libro", "Ej: Cien años de soledad")
+    tf_autor  = campo_texto("Autor",            "Ej: Gabriel García Márquez")
+    tf_isbn   = campo_texto("ISBN",             "Ej: 978-3-16-148410-0")
+
+    # ── LISTA VISUAL DE LIBROS ───────────────────────────────
+    lista_libros = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
+
+    def refrescar_lista():
+        """Vuelve a dibujar la lista completa de libros."""
+        lista_libros.controls.clear()
+
+        if not libros:
             lista_libros.controls.append(
                 ft.Container(
-                    content=ft.ListTile(
-                        leading=ft.Icon(ft.icons.BOOK_ROUNDED, color=ft.colors.BLUE_ACCENT),
-                        title=ft.Text(tf_titulo.value, weight="bold"),
-                        subtitle=ft.Text(f"Autor: {tf_autor.value} | Género: {tf_genero.value}"),
-                        trailing=ft.IconButton(ft.icons.DELETE_OUTLINE, icon_color=ft.colors.RED_400)
+                    content=ft.Text(
+                        "No hay libros registrados aún.",
+                        color=COLORES["subtexto"],
+                        italic=True,
                     ),
-                    bgcolor=ft.colors.GREY_100,
-                    border_radius=10,
+                    padding=20,
+                    alignment=ft.alignment.center,
                 )
             )
-            # Limpiamos los campos
-            tf_titulo.value = ""
-            tf_autor.value = ""
-            tf_genero.value = ""
-            tf_titulo.error_text = None
-            page.update()
+        else:
+            for libro in libros:
+                fila = tarjeta(
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.icons.BOOK_ROUNDED,
+                                    color=COLORES["primario"], size=28),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        libro.titulo,
+                                        color=COLORES["texto"],
+                                        weight=ft.FontWeight.BOLD,
+                                        size=14,
+                                    ),
+                                    ft.Text(
+                                        f"Autor: {libro.autor}  |  ISBN: {libro.isbn}",
+                                        color=COLORES["subtexto"],
+                                        size=12,
+                                    ),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                            chip_estado(libro.esta_disponible()),
+                        ],
+                        spacing=12,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                )
+                lista_libros.controls.append(fila)
 
-    btn_guardar = ft.ElevatedButton(
-        "Guardar Libro", 
-        icon=ft.icons.SAVE,
-        style=ft.ButtonStyle(color=ft.colors.WHITE, bgcolor=ft.colors.BLUE_700),
-        on_click=guardar_click,
-        height=50
+        page.update()
+
+    def guardar_click(e):
+        """Valida el formulario, crea el Libro y lo agrega a la lista."""
+        titulo = tf_titulo.value.strip()
+        autor  = tf_autor.value.strip()
+        isbn   = tf_isbn.value.strip()
+
+        # ── Validaciones ────────────────────────────────────
+        if not titulo or not autor or not isbn:
+            snackbar_mensaje(
+                page,
+                "Por favor completa todos los campos (Título, Autor e ISBN).",
+                error=True
+            )
+            return
+
+        # Verificar ISBN duplicado
+        if any(l.isbn == isbn for l in libros):
+            snackbar_mensaje(
+                page,
+                f"Ya existe un libro con el ISBN '{isbn}'.",
+                error=True
+            )
+            return
+
+        # ── Crear y registrar el libro ───────────────────────
+        nuevo_libro = Libro(titulo, autor, isbn)
+        libros.append(nuevo_libro)
+
+        # Limpiar campos
+        tf_titulo.value = ""
+        tf_autor.value  = ""
+        tf_isbn.value   = ""
+
+        snackbar_mensaje(page, f"Libro '{titulo}' registrado con éxito.")
+        refrescar_lista()
+
+    # ── BOTÓN GUARDAR ────────────────────────────────────────
+    btn_guardar = boton_primario(
+        "Guardar Libro",
+        guardar_click,
+        icono=ft.icons.SAVE_OUTLINED
     )
 
-    # --- Construcción final de la Vista ---
+    # Carga inicial de la lista
+    refrescar_lista()
+
+    # ── CONSTRUCCIÓN DE LA VISTA ─────────────────────────────
     return ft.Container(
-        padding=20,
-        content=ft.Column([
-            titulo,
-            subtitulo,
-            ft.Divider(height=20, color=ft.colors.TRANSPARENT),
-            tf_titulo,
-            tf_autor,
-            tf_genero,
-            ft.Row([btn_guardar], alignment=ft.MainAxisAlignment.END),
-            ft.Divider(height=30),
-            ft.Text("Inventario Actual", size=20, weight="w600"),
-            lista_libros
-        ], expand=True)
+        padding=24,
+        expand=True,
+        content=ft.Column(
+            controls=[
+                titulo_seccion("Gestión de Libros"),
+                ft.Text(
+                    "Registra nuevos ejemplares en el inventario.",
+                    color=COLORES["subtexto"],
+                    size=14,
+                ),
+                ft.Container(height=8),
+
+                # Formulario
+                tarjeta(
+                    ft.Column(
+                        controls=[
+                            ft.Text(
+                                "Nuevo Libro",
+                                color=COLORES["texto"],
+                                weight=ft.FontWeight.BOLD,
+                                size=16,
+                            ),
+                            ft.Container(height=4),
+                            tf_titulo,
+                            tf_autor,
+                            tf_isbn,
+                            ft.Container(height=4),
+                            ft.Row(
+                                [btn_guardar],
+                                alignment=ft.MainAxisAlignment.END
+                            ),
+                        ],
+                        spacing=12,
+                    )
+                ),
+
+                ft.Container(height=16),
+                ft.Text(
+                    "Inventario Actual",
+                    color=COLORES["texto"],
+                    size=18,
+                    weight=ft.FontWeight.W_600,
+                ),
+                ft.Divider(color=COLORES["subtexto"] + "44"),
+                lista_libros,
+            ],
+            expand=True,
+            spacing=8,
+        ),
     )
