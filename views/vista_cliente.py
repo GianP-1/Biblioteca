@@ -1,91 +1,215 @@
 import flet as ft
+from models.cliente import Cliente
+from components.Navbar import (
+    COLORES, tarjeta, boton_primario,
+    campo_texto, titulo_seccion, snackbar_mensaje
+)
 
 
 class VistaCliente:
-    def __init__(self, page: ft.Page, clientes: list = None, on_volver=None):
-        self.page = page
+    """
+    Vista para gestionar los clientes registrados en la biblioteca.
+
+    Permite registrar nuevos clientes (Nombre, Apellido, Cédula) y visualizar
+    la lista completa de clientes con sus préstamos activos.
+
+    Args:
+        page     : Referencia a la página principal de Flet.
+        clientes : Lista compartida de objetos Cliente (se modifica en lugar).
+    """
+
+    def _init_(self, page: ft.Page, clientes: list = None):
+        self.page     = page
         self.clientes = clientes if clientes is not None else []
-        self.on_volver = on_volver
 
     def build(self) -> ft.Control:
-        self.txt_nombre = ft.TextField(label="Nombre", width=320)
-        self.txt_apellido = ft.TextField(label="Apellido", width=320)
-        self.txt_cedula = ft.TextField(
-            label="Cédula / ID",
-            width=320,
-            keyboard_type=ft.KeyboardType.NUMBER,
-        )
-        self.msg = ft.Text("", size=13)
 
-        return ft.Column(
-            controls=[
-                ft.Text("Registro de Cliente", size=26, weight=ft.FontWeight.BOLD),
-                ft.Divider(),
-                self.txt_nombre,
-                self.txt_apellido,
-                self.txt_cedula,
-                self.msg,
-                ft.Row(
-                    controls=[
-                        ft.ElevatedButton("Registrar", on_click=self._registrar),
-                        ft.TextButton("Volver al menú", on_click=self._volver),
-                    ],
-                    spacing=12,
-                ),
-            ],
-            spacing=14,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        # ── CAMPOS DEL FORMULARIO ────────────────────────────
+        self.txt_nombre   = campo_texto("Nombre",      "Ej: Juan")
+        self.txt_apellido = campo_texto("Apellido",    "Ej: Pérez")
+        self.txt_cedula   = campo_texto("Cédula / ID", "Ej: 8-123-4567")
+
+        # ── LISTA VISUAL DE CLIENTES ─────────────────────────
+        self.lista_clientes = ft.Column(
+            spacing=10,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True
         )
 
-    # lógica según el flujograma 
+        self._refrescar_lista()
+
+        # ── BOTÓN GUARDAR ────────────────────────────────────
+        btn_registrar = boton_primario(
+            "Registrar Cliente",
+            self._registrar,
+            icono=ft.icons.PERSON_ADD_OUTLINED
+        )
+
+        # ── CONSTRUCCIÓN DE LA VISTA ─────────────────────────
+        return ft.Container(
+            padding=24,
+            expand=True,
+            content=ft.Column(
+                controls=[
+                    titulo_seccion("Gestión de Clientes"),
+                    ft.Text(
+                        "Registra los usuarios de la biblioteca.",
+                        color=COLORES["subtexto"],
+                        size=14,
+                    ),
+                    ft.Container(height=8),
+
+                    # Formulario
+                    tarjeta(
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "Nuevo Cliente",
+                                    color=COLORES["texto"],
+                                    weight=ft.FontWeight.BOLD,
+                                    size=16,
+                                ),
+                                ft.Container(height=4),
+                                self.txt_nombre,
+                                self.txt_apellido,
+                                self.txt_cedula,
+                                ft.Container(height=4),
+                                ft.Row(
+                                    [btn_registrar],
+                                    alignment=ft.MainAxisAlignment.END
+                                ),
+                            ],
+                            spacing=12,
+                        )
+                    ),
+
+                    ft.Container(height=16),
+                    ft.Text(
+                        "Clientes Registrados",
+                        color=COLORES["texto"],
+                        size=18,
+                        weight=ft.FontWeight.W_600,
+                    ),
+                    ft.Divider(color=COLORES["subtexto"] + "44"),
+                    self.lista_clientes,
+                ],
+                expand=True,
+                spacing=8,
+            ),
+        )
+
+    # ── LÓGICA ───────────────────────────────────────────────
 
     def _registrar(self, _):
-        nombre = self.txt_nombre.value.strip()
+        """Valida el formulario, crea el Cliente y lo agrega a la lista."""
+        nombre   = self.txt_nombre.value.strip()
         apellido = self.txt_apellido.value.strip()
-        cedula = self.txt_cedula.value.strip()
+        cedula   = self.txt_cedula.value.strip()
 
         # Decisión: ¿están todos los campos llenos?
         if not nombre or not apellido or not cedula:
-            self._set_msg("Campos obligatorios vacíos.", ft.Colors.RED)
+            snackbar_mensaje(
+                self.page,
+                "Campos obligatorios vacíos.",
+                error=True
+            )
             return
 
         # Decisión: ¿la cédula ya existe?
-        if any(c["cedula"] == cedula for c in self.clientes):
-            self._set_msg("Cliente ya registrado.", ft.Colors.RED)
+        if any(c.cedula == cedula for c in self.clientes):
+            snackbar_mensaje(
+                self.page,
+                "Ya existe un cliente con esa cédula.",
+                error=True
+            )
             return
 
-        # Guardar
-        self.clientes.append({"nombre": nombre, "apellido": apellido, "cedula": cedula})
-        self._set_msg("Cliente registrado con éxito.", ft.Colors.GREEN)
+        # Guardar como objeto Cliente (no diccionario)
+        nuevo_cliente = Cliente(nombre, apellido, cedula)
+        self.clientes.append(nuevo_cliente)
+
+        snackbar_mensaje(self.page, f"Cliente '{nombre} {apellido}' registrado con éxito.")
         self._limpiar()
+        self._refrescar_lista()
 
-    def _volver(self, _):
-        if self.on_volver:
-            self.on_volver()
+    def _refrescar_lista(self):
+        """Vuelve a dibujar la lista completa de clientes."""
+        self.lista_clientes.controls.clear()
 
-    # helpers 
+        if not self.clientes:
+            self.lista_clientes.controls.append(
+                ft.Container(
+                    content=ft.Text(
+                        "No hay clientes registrados aún.",
+                        color=COLORES["subtexto"],
+                        italic=True,
+                    ),
+                    padding=20,
+                    alignment=ft.alignment.center,
+                )
+            )
+        else:
+            for cliente in self.clientes:
+                cantidad       = len(cliente.libros_prestados)
+                texto_prestamo = (
+                    f"{cantidad} libro(s) prestado(s)"
+                    if cantidad > 0
+                    else "Sin préstamos activos"
+                )
+                color_prestamo = (
+                    COLORES["advertencia"] if cantidad > 0 else COLORES["subtexto"]
+                )
 
-    def _set_msg(self, texto: str, color):
-        self.msg.value = texto
-        self.msg.color = color
+                fila = tarjeta(
+                    ft.Row(
+                        controls=[
+                            ft.CircleAvatar(
+                                content=ft.Text(
+                                    cliente.nombre[0].upper(),
+                                    color=COLORES["texto"],
+                                    weight=ft.FontWeight.BOLD,
+                                    size=16,
+                                ),
+                                bgcolor=COLORES["primario"],
+                                radius=22,
+                            ),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        cliente.nombre_completo(),
+                                        color=COLORES["texto"],
+                                        weight=ft.FontWeight.BOLD,
+                                        size=14,
+                                    ),
+                                    ft.Text(
+                                        f"Cédula: {cliente.cedula}",
+                                        color=COLORES["subtexto"],
+                                        size=12,
+                                    ),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                            ft.Text(
+                                texto_prestamo,
+                                color=color_prestamo,
+                                size=12,
+                                weight=ft.FontWeight.W_500,
+                            ),
+                        ],
+                        spacing=12,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                )
+                self.lista_clientes.controls.append(fila)
+
         self.page.update()
+
+    # ── HELPERS ──────────────────────────────────────────────
 
     def _limpiar(self):
-        self.txt_nombre.value = ""
+        """Limpia todos los campos del formulario."""
+        self.txt_nombre.value   = ""
         self.txt_apellido.value = ""
-        self.txt_cedula.value = ""
+        self.txt_cedula.value   = ""
         self.page.update()
-
-
-# ejecución para probar 
-def main(page: ft.Page):
-    page.title = "Vista Cliente"
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-
-    vista = VistaCliente(page)
-    page.add(vista.build())
-
-
-if __name__ == "__main__":
-    ft.app(target=main)
