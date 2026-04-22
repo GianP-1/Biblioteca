@@ -18,7 +18,7 @@ class VistaCliente:
         clientes : Lista compartida de objetos Cliente (se modifica en lugar).
     """
 
-    def _init_(self, page: ft.Page, clientes: list = None):
+    def __init__(self, page: ft.Page, clientes: list = None):
         self.page     = page
         self.clientes = clientes if clientes is not None else []
 
@@ -42,7 +42,7 @@ class VistaCliente:
         btn_registrar = boton_primario(
             "Registrar Cliente",
             self._registrar,
-            icono=ft.icons.PERSON_ADD_OUTLINED
+            icono=ft.Icons.PERSON_ADD
         )
 
         # ── CONSTRUCCIÓN DE LA VISTA ─────────────────────────
@@ -145,7 +145,7 @@ class VistaCliente:
                         italic=True,
                     ),
                     padding=20,
-                    alignment=ft.alignment.center,
+                    alignment=ft.alignment.Alignment(0, 0),
                 )
             )
         else:
