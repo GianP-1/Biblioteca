@@ -15,7 +15,6 @@ COLORES = {
 
 class Navbar:
     def __init__(self, pagina_actual: str, on_cambiar):
-
         self.pagina_actual = pagina_actual
         self.on_cambiar    = on_cambiar
 
@@ -29,7 +28,7 @@ class Navbar:
             content=ft.Row(
                 controls=[
                     ft.Icon(
-                        name=icono_sel if activo else icono,
+                        icon=icono_sel if activo else icono,
                         color=COLORES["primario"] if activo else COLORES["subtexto"],
                         size=22,
                     ),
@@ -46,15 +45,15 @@ class Navbar:
             border_radius=10,
             bgcolor=COLORES["primario"] + "22" if activo else "transparent",
             on_click=al_pulsar,
-            animate=ft.animation.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
+            animate=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
             ink=True,
         )
 
     def build(self):
         items = [
-            ("book_outlined",      "book",        "Libros",    "libros"),
-            ("people_outlined",    "people",      "Clientes",  "clientes"),
-            ("swap_horiz_outlined","swap_horiz",  "Préstamos", "prestamos"),
+            (ft.Icons.BOOK,        ft.Icons.BOOK,        "Libros",    "libros"),
+            (ft.Icons.PEOPLE,      ft.Icons.PEOPLE,      "Clientes",  "clientes"),
+            (ft.Icons.SWAP_HORIZ,  ft.Icons.SWAP_HORIZ,  "Préstamos", "prestamos"),
         ]
 
         return ft.Container(
@@ -67,8 +66,11 @@ class Navbar:
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Icon(ft.icons.LOCAL_LIBRARY,
-                                        color=COLORES["primario"], size=36),
+                                ft.Icon(
+                                    icon=ft.Icons.LOCAL_LIBRARY,
+                                    color=COLORES["primario"],
+                                    size=36,
+                                ),
                                 ft.Text("Biblioteca", color=COLORES["texto"],
                                         size=18, weight=ft.FontWeight.BOLD),
                                 ft.Text("Sistema de Control",
@@ -78,7 +80,7 @@ class Navbar:
                             spacing=4,
                         ),
                         padding=ft.padding.only(bottom=24),
-                        alignment=ft.alignment.center,
+                        alignment=ft.alignment.Alignment(0, 0),
                     ),
                     ft.Divider(color=COLORES["subtexto"] + "44", height=1),
                     ft.Container(height=8),
@@ -112,14 +114,19 @@ def tarjeta(contenido: ft.Control, padding: int = 16) -> ft.Container:
         ),
     )
 
+def _contenido_boton(texto: str, icono, color: str) -> ft.Control:
+    controles = []
+    if icono:
+        controles.append(ft.Icon(icon=icono, color=color, size=18))
+    controles.append(ft.Text(texto, color=color))
+    return ft.Row(controles, tight=True, spacing=6)
+
 def boton_primario(texto: str, on_click, icono=None) -> ft.ElevatedButton:
     return ft.ElevatedButton(
-        text=texto,
-        icon=icono,
+        content=_contenido_boton(texto, icono, COLORES["texto"]),
         on_click=on_click,
         style=ft.ButtonStyle(
             bgcolor=COLORES["primario"],
-            color=COLORES["texto"],
             shape=ft.RoundedRectangleBorder(radius=8),
             padding=ft.padding.symmetric(horizontal=20, vertical=12),
         ),
@@ -127,12 +134,10 @@ def boton_primario(texto: str, on_click, icono=None) -> ft.ElevatedButton:
 
 def boton_exito(texto: str, on_click, icono=None) -> ft.ElevatedButton:
     return ft.ElevatedButton(
-        text=texto,
-        icon=icono,
+        content=_contenido_boton(texto, icono, "#FFFFFF"),
         on_click=on_click,
         style=ft.ButtonStyle(
             bgcolor=COLORES["exito"],
-            color="#FFFFFF",
             shape=ft.RoundedRectangleBorder(radius=8),
             padding=ft.padding.symmetric(horizontal=20, vertical=12),
         ),
@@ -140,11 +145,9 @@ def boton_exito(texto: str, on_click, icono=None) -> ft.ElevatedButton:
 
 def boton_error(texto: str, on_click, icono=None) -> ft.OutlinedButton:
     return ft.OutlinedButton(
-        text=texto,
-        icon=icono,
+        content=_contenido_boton(texto, icono, COLORES["error"]),
         on_click=on_click,
         style=ft.ButtonStyle(
-            color=COLORES["error"],
             side=ft.BorderSide(color=COLORES["error"], width=1),
             shape=ft.RoundedRectangleBorder(radius=8),
             padding=ft.padding.symmetric(horizontal=20, vertical=12),
@@ -178,10 +181,11 @@ def titulo_seccion(texto: str) -> ft.Text:
     return ft.Text(texto, size=22, weight=ft.FontWeight.BOLD, color=COLORES["texto"])
 
 def snackbar_mensaje(page: ft.Page, mensaje: str, error: bool = False):
-    page.snack_bar = ft.SnackBar(
+    snack = ft.SnackBar(
         content=ft.Text(mensaje, color="#FFFFFF"),
         bgcolor=COLORES["error"] if error else COLORES["exito"],
         duration=3000,
+        open=True,
     )
-    page.snack_bar.open = True
+    page.overlay.append(snack)
     page.update()
