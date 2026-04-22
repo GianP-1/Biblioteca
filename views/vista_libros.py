@@ -108,10 +108,10 @@ def vista_libros(page: ft.Page, libros: list) -> ft.Container:
             return
 
         isbn_limpio = isbn.replace("-", "")
-        if not isbn_limpio.isdigit() or len(isbn_limpio) not in (10, 13):
+        if not isbn_limpio.isdigit() or len(isbn_limpio) < 2:
             snackbar_mensaje(
                 page,
-                "El ISBN debe tener 10 o 13 dígitos (guiones opcionales). Ej: 978-3-16-148410-0",
+                "El ISBN debe tener al menos 2 dígitos (guiones opcionales). Ej: 978-3-16-148410-0",
                 error=True
             )
             return
