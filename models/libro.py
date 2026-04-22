@@ -1,5 +1,4 @@
-class Libro:
-   import flet as ft
+import flet as ft
 from components.Navbar import COLORES, Navbar, snackbar_mensaje
 from views.vista_libros import vista_libros
 from views.vista_clientes import VistaCliente
