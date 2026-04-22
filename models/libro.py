@@ -10,7 +10,7 @@ class Libro:
         cliente_asignado (Cliente | None): Cliente que tiene el libro prestado, o None si está disponible.
     """
 
-    def _init_(self, titulo: str, autor: str, isbn: str):
+    def __init__(self, titulo: str, autor: str, isbn: str):
         self.titulo = titulo
         self.autor = autor
         self.isbn = isbn
@@ -46,8 +46,8 @@ class Libro:
         """Retorna True si el libro está disponible para préstamo."""
         return self.estado == "Disponible"
 
-    def _str_(self) -> str:
+    def __str__(self) -> str:
         return f"{self.titulo} - {self.autor} | ISBN: {self.isbn} | {self.estado}"
 
-    def _repr_(self) -> str:
+    def __repr__(self) -> str:
         return f"Libro(titulo='{self.titulo}', autor='{self.autor}', isbn='{self.isbn}', estado='{self.estado}')"

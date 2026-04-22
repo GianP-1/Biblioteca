@@ -91,6 +91,31 @@ def vista_libros(page: ft.Page, libros: list) -> ft.Container:
             )
             return
 
+        if not any(c.isalpha() for c in titulo):
+            snackbar_mensaje(
+                page,
+                "El título debe contener letras, no puede ser solo números.",
+                error=True
+            )
+            return
+
+        if not all(c.isalpha() or c.isspace() for c in autor):
+            snackbar_mensaje(
+                page,
+                "El autor solo puede contener letras y espacios.",
+                error=True
+            )
+            return
+
+        isbn_limpio = isbn.replace("-", "")
+        if not isbn_limpio.isdigit() or len(isbn_limpio) not in (10, 13):
+            snackbar_mensaje(
+                page,
+                "El ISBN debe tener 10 o 13 dígitos (guiones opcionales). Ej: 978-3-16-148410-0",
+                error=True
+            )
+            return
+
         # Verificar ISBN duplicado
         if any(l.isbn == isbn for l in libros):
             snackbar_mensaje(

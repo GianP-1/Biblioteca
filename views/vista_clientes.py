@@ -110,7 +110,32 @@ class VistaCliente:
         if not nombre or not apellido or not cedula:
             snackbar_mensaje(
                 self.page,
-                "Campos obligatorios vacíos.",
+                "Por favor completa todos los campos (Nombre, Apellido y Cédula).",
+                error=True
+            )
+            return
+
+        if not all(c.isalpha() or c.isspace() for c in nombre):
+            snackbar_mensaje(
+                self.page,
+                "El nombre solo puede contener letras y espacios.",
+                error=True
+            )
+            return
+
+        if not all(c.isalpha() or c.isspace() for c in apellido):
+            snackbar_mensaje(
+                self.page,
+                "El apellido solo puede contener letras y espacios.",
+                error=True
+            )
+            return
+
+        cedula_limpia = cedula.replace("-", "")
+        if not cedula_limpia.isalnum():
+            snackbar_mensaje(
+                self.page,
+                "La cédula solo puede contener números, letras y guiones. Ej: 8-123-4567",
                 error=True
             )
             return
