@@ -18,9 +18,9 @@ def main(page: ft.Page):
     page.title            = "Sistema de Biblioteca"
     page.bgcolor          = COLORES["fondo"]
     page.padding          = 0
-    page.window_width     = 1000
-    page.window_height    = 700
-    page.window_resizable = True
+    page.window.width     = 1000
+    page.window.height    = 700
+    page.window.resizable = True
 
     # ── DATOS COMPARTIDOS ────────────────────────────────────
     # Estas listas son pasadas a todas las vistas para que
@@ -74,4 +74,4 @@ def main(page: ft.Page):
 
 
 # ── ARRANQUE DE LA APLICACIÓN ────────────────────────────────
-ft.app(target=main)
+ft.run(main)
