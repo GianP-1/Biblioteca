@@ -1,77 +1,31 @@
-import flet as ft
-from components.Navbar import COLORES, Navbar, snackbar_mensaje
-from views.vista_libros import vista_libros
-from views.vista_clientes import VistaCliente
-from views.vista_prestamos import VistaPrestamos
-
-
-def main(page: ft.Page):
+class Cliente:
     """
-    Punto de entrada principal de la aplicación Biblioteca.
+    Representa un cliente registrado en la biblioteca.
 
-    Configura la página, inicializa las listas compartidas de datos
-    y gestiona la navegación entre las tres vistas principales:
-    Libros, Clientes y Préstamos.
+    Atributos:
+        nombre (str): Nombre del cliente.
+        apellido (str): Apellido del cliente.
+        cedula (str): Cédula o ID único del cliente.
+        libros_prestados (list): Lista de libros que el cliente tiene actualmente prestados.
     """
 
-    # ── CONFIGURACIÓN DE LA PÁGINA ───────────────────────────
-    page.title            = "Sistema de Biblioteca"
-    page.bgcolor          = COLORES["fondo"]
-    page.padding          = 0
-    page.window.width     = 1000
-    page.window.height    = 700
-    page.window.resizable = True
+    def _init_(self, nombre: str, apellido: str, cedula: str):
+        self.nombre = nombre
+        self.apellido = apellido
+        self.cedula = cedula
+        self.libros_prestados = []
 
-    # ── DATOS COMPARTIDOS ────────────────────────────────────
-    # Estas listas son pasadas a todas las vistas para que
-    # compartan el mismo estado durante la sesión.
-    libros   = []
-    clientes = []
+    def tiene_libros(self) -> bool:
+        """Retorna True si el cliente tiene al menos un libro prestado."""
+        return len(self.libros_prestados) > 0
 
-    # ── CONTENEDOR PRINCIPAL DE VISTAS ──────────────────────
-    contenido = ft.Container(expand=True)
+    def nombre_completo(self) -> str:
+        """Retorna el nombre completo del cliente."""
+        return f"{self.nombre} {self.apellido}"
 
-    # ── NAVEGACIÓN ───────────────────────────────────────────
-    def cambiar_vista(nombre: str):
-        """
-        Cambia la vista activa según la sección seleccionada
-        en el Navbar y reconstruye el Navbar para reflejar
-        el ítem activo.
-        """
+    def _str_(self) -> str:
+        return f"{self.nombre} {self.apellido} - CI: {self.cedula}"
 
-        # Reconstruir Navbar con la página activa actualizada
-        navbar = Navbar(pagina_actual=nombre, on_cambiar=cambiar_vista)
-
-        # Cargar la vista correspondiente
-        if nombre == "libros":
-            contenido.content = vista_libros(page, libros)
-
-        elif nombre == "clientes":
-            vista = VistaCliente(page, clientes)
-            contenido.content = vista.build()
-
-        elif nombre == "prestamos":
-            vista = VistaPrestamos(page, libros, clientes)
-            contenido.content = vista.build()
-
-        # Reconstruir el layout completo con el Navbar actualizado
-        page.controls.clear()
-        page.controls.append(
-            ft.Row(
-                controls=[
-                    navbar.build(),
-                    ft.VerticalDivider(width=1, color=COLORES["subtexto"] + "33"),
-                    contenido,
-                ],
-                expand=True,
-                spacing=0,
-            )
-        )
-        page.update()
-
-    # ── VISTA INICIAL ────────────────────────────────────────
-    cambiar_vista("libros")
-
-
-# ── ARRANQUE DE LA APLICACIÓN ────────────────────────────────
-ft.run(main)
+    def _repr_(self) -> str:
+        return f"Cliente(nombre='{self.nombre}', apellido='{self.apellido}', cedula='{self.cedula}')"
+    
