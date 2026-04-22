@@ -23,12 +23,36 @@ class VistaPrestamos:
         self.libros   = libros
         self.clientes = clientes
 
+    def _opciones_libros(self):
+        return [
+            ft.dropdown.Option(
+                key=l.isbn,
+                text=f"{l.titulo} — {l.autor}",
+                content=ft.Text(f"{l.titulo} — {l.autor}", color=COLORES["texto"]),
+            )
+            for l in self.libros if l.esta_disponible()
+        ]
+
+    def _opciones_clientes(self):
+        return [
+            ft.dropdown.Option(
+                key=c.cedula,
+                text=c.nombre_completo(),
+                content=ft.Text(c.nombre_completo(), color=COLORES["texto"]),
+            )
+            for c in self.clientes
+        ]
+
     def build(self) -> ft.Control:
 
         # ── DROPDOWN LIBRO ───────────────────────────────────
+        estilo_menu = ft.MenuStyle(bgcolor=COLORES["superficie"])
+
         self.dd_libro = ft.Dropdown(
             label="Seleccionar Libro Disponible",
             hint_text="Elige un libro...",
+            options=self._opciones_libros(),
+            menu_style=estilo_menu,
             border_radius=8,
             border_color=COLORES["subtexto"],
             focused_border_color=COLORES["primario"],
@@ -42,6 +66,8 @@ class VistaPrestamos:
         self.dd_cliente = ft.Dropdown(
             label="Seleccionar Cliente",
             hint_text="Elige un cliente...",
+            options=self._opciones_clientes(),
+            menu_style=estilo_menu,
             border_radius=8,
             border_color=COLORES["subtexto"],
             focused_border_color=COLORES["primario"],
@@ -58,15 +84,14 @@ class VistaPrestamos:
             expand=True,
         )
 
-        # Carga inicial
-        self._refrescar_dropdowns()
-        self._refrescar_lista()
+        # Carga inicial de la lista (sin page.update, aún no está en la página)
+        self._refrescar_lista(actualizar=False)
 
         # ── BOTÓN PRESTAR ────────────────────────────────────
         btn_prestar = boton_primario(
             "Confirmar Préstamo",
             self._prestar,
-            icono=ft.icons.SWAP_HORIZ_OUTLINED,
+            icono=ft.Icons.SWAP_HORIZ,
         )
 
         # ── CONSTRUCCIÓN DE LA VISTA ─────────────────────────
@@ -183,29 +208,11 @@ class VistaPrestamos:
 
     def _refrescar_dropdowns(self):
         """Actualiza las opciones de los dropdowns con datos actuales."""
-
-        # Solo libros disponibles en el dropdown
-        self.dd_libro.options = [
-            ft.dropdown.Option(
-                key=libro.isbn,
-                text=f"{libro.titulo} — {libro.autor}",
-            )
-            for libro in self.libros
-            if libro.esta_disponible()
-        ]
-
-        # Todos los clientes registrados
-        self.dd_cliente.options = [
-            ft.dropdown.Option(
-                key=cliente.cedula,
-                text=cliente.nombre_completo(),
-            )
-            for cliente in self.clientes
-        ]
-
+        self.dd_libro.options   = self._opciones_libros()
+        self.dd_cliente.options = self._opciones_clientes()
         self.page.update()
 
-    def _refrescar_lista(self):
+    def _refrescar_lista(self, actualizar: bool = True):
         """Vuelve a dibujar la lista de préstamos activos."""
         self.lista_prestamos.controls.clear()
 
@@ -220,7 +227,7 @@ class VistaPrestamos:
                         italic=True,
                     ),
                     padding=20,
-                    alignment=ft.alignment.center,
+                    alignment=ft.alignment.Alignment(0, 0),
                 )
             )
         else:
@@ -237,7 +244,7 @@ class VistaPrestamos:
                     ft.Row(
                         controls=[
                             ft.Icon(
-                                ft.icons.BOOK_ROUNDED,
+                                ft.Icons.BOOK,
                                 color=COLORES["advertencia"],
                                 size=28,
                             ),
@@ -260,7 +267,7 @@ class VistaPrestamos:
                             ),
                             chip_estado(False),
                             ft.IconButton(
-                                icon=ft.icons.UNDO_OUTLINED,
+                                icon=ft.Icons.UNDO,
                                 icon_color=COLORES["primario"],
                                 tooltip="Devolver libro",
                                 on_click=hacer_devolucion,
@@ -272,4 +279,5 @@ class VistaPrestamos:
                 )
                 self.lista_prestamos.controls.append(fila)
 
-        self.page.update()
+        if actualizar:
+            self.page.update()
