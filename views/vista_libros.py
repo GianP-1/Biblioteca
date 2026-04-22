@@ -39,7 +39,7 @@ def vista_libros(page: ft.Page, libros: list) -> ft.Container:
                         italic=True,
                     ),
                     padding=20,
-                    alignment=ft.alignment.center,
+                    alignment=ft.alignment.Alignment(0, 0),
                 )
             )
         else:
@@ -47,7 +47,7 @@ def vista_libros(page: ft.Page, libros: list) -> ft.Container:
                 fila = tarjeta(
                     ft.Row(
                         controls=[
-                            ft.Icon(ft.icons.BOOK_ROUNDED,
+                            ft.Icon(icon=ft.Icons.BOOK,
                                     color=COLORES["primario"], size=28),
                             ft.Column(
                                 controls=[
@@ -116,7 +116,7 @@ def vista_libros(page: ft.Page, libros: list) -> ft.Container:
     btn_guardar = boton_primario(
         "Guardar Libro",
         guardar_click,
-        icono=ft.icons.SAVE_OUTLINED
+        icono=ft.Icons.SAVE
     )
 
     # Carga inicial de la lista
