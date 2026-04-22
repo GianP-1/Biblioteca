@@ -1,53 +1,78 @@
 class Libro:
+   import flet as ft
+from components.Navbar import COLORES, Navbar, snackbar_mensaje
+from views.vista_libros import vista_libros
+from views.vista_clientes import VistaCliente
+from views.vista_prestamos import VistaPrestamos
+
+
+def main(page: ft.Page):
     """
-    Representa un libro dentro del sistema de biblioteca.
+    Punto de entrada principal de la aplicación Biblioteca.
 
-    Atributos:
-        titulo (str): Título del libro.
-        autor (str): Nombre del autor del libro.
-        isbn (str): Identificador único del libro (ISBN).
-        estado (str): Estado actual del libro, "Disponible" o "Prestado".
-        cliente_asignado (Cliente | None): Cliente que tiene el libro prestado, o None si está disponible.
+    Configura la página, inicializa las listas compartidas de datos
+    y gestiona la navegación entre las tres vistas principales:
+    Libros, Clientes y Préstamos.
     """
 
-    def __init__(self, titulo: str, autor: str, isbn: str):
-        self.titulo = titulo
-        self.autor = autor
-        self.isbn = isbn
-        self.estado = "Disponible"
-        self.cliente_asignado = None
+    # ── CONFIGURACIÓN DE LA PÁGINA ───────────────────────────
+    page.title            = "Sistema de Biblioteca"
+    page.bgcolor          = COLORES["fondo"]
+    page.padding          = 0
+    page.window.width     = 1000
+    page.window.height    = 700
+    page.window.resizable = True
 
-    def prestar(self, cliente) -> bool:
+    # ── DATOS COMPARTIDOS ────────────────────────────────────
+    # Estas listas son pasadas a todas las vistas para que
+    # compartan el mismo estado durante la sesión.
+    libros   = []
+    clientes = []
+
+    # ── CONTENEDOR PRINCIPAL DE VISTAS ──────────────────────
+    contenido = ft.Container(expand=True)
+
+    # ── NAVEGACIÓN ───────────────────────────────────────────
+    def cambiar_vista(nombre: str):
         """
-        Presta el libro a un cliente.
-        Retorna True si se prestó correctamente, False si ya estaba prestado.
+        Cambia la vista activa según la sección seleccionada
+        en el Navbar y reconstruye el Navbar para reflejar
+        el ítem activo.
         """
-        if self.estado == "Prestado":
-            return False
-        self.estado = "Prestado"
-        self.cliente_asignado = cliente
-        cliente.libros_prestados.append(self)
-        return True
 
-    def devolver(self) -> bool:
-        """
-        Devuelve el libro a la biblioteca.
-        Retorna True si se devolvió correctamente, False si ya estaba disponible.
-        """
-        if self.estado == "Disponible":
-            return False
-        if self.cliente_asignado:
-            self.cliente_asignado.libros_prestados.remove(self)
-        self.estado = "Disponible"
-        self.cliente_asignado = None
-        return True
+        # Reconstruir Navbar con la página activa actualizada
+        navbar = Navbar(pagina_actual=nombre, on_cambiar=cambiar_vista)
 
-    def esta_disponible(self) -> bool:
-        """Retorna True si el libro está disponible para préstamo."""
-        return self.estado == "Disponible"
+        # Cargar la vista correspondiente
+        if nombre == "libros":
+            contenido.content = vista_libros(page, libros)
 
-    def __str__(self) -> str:
-        return f"{self.titulo} - {self.autor} | ISBN: {self.isbn} | {self.estado}"
+        elif nombre == "clientes":
+            vista = VistaCliente(page, clientes)
+            contenido.content = vista.build()
 
-    def __repr__(self) -> str:
-        return f"Libro(titulo='{self.titulo}', autor='{self.autor}', isbn='{self.isbn}', estado='{self.estado}')"
+        elif nombre == "prestamos":
+            vista = VistaPrestamos(page, libros, clientes)
+            contenido.content = vista.build()
+
+        # Reconstruir el layout completo con el Navbar actualizado
+        page.controls.clear()
+        page.controls.append(
+            ft.Row(
+                controls=[
+                    navbar.build(),
+                    ft.VerticalDivider(width=1, color=COLORES["subtexto"] + "33"),
+                    contenido,
+                ],
+                expand=True,
+                spacing=0,
+            )
+        )
+        page.update()
+
+    # ── VISTA INICIAL ────────────────────────────────────────
+    cambiar_vista("libros")
+
+
+# ── ARRANQUE DE LA APLICACIÓN ────────────────────────────────
+ft.run(main)
